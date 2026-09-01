@@ -120,17 +120,26 @@ still judge the way we judged*. The first is deterministic; the second is not.
 
 ## Containers, and where they live
 
-Everything container-related lives under `docker/`:
+Nothing about containers sits at the repository root, and the two halves split on
+the same rule the package follows one level down — **what ships versus what only
+a developer needs:**
 
 ```
-docker/
-├── Dockerfile                    the image; CI builds it and runs it
-├── Dockerfile.dockerignore       BuildKit reads it from beside the Dockerfile
-├── devenv/
-│   ├── compose.yaml              the local stack: Postgres with pgvector
-│   └── compose.override.yaml     dev only: exposed port, bind mount, debug logs
-└── postgres/init.sql             runs once, on an empty data directory
+docker/                           what gets built and shipped
+├── Dockerfile                    CI builds it and runs it
+└── Dockerfile.dockerignore       BuildKit reads it from beside the Dockerfile
+
+devenv/                           what only ever runs on your machine
+└── docker/
+    ├── compose.yaml              the local stack: Postgres with pgvector
+    ├── compose.override.yaml     dev only: exposed port, bind mount, debug logs
+    └── postgres/init.sql         runs once, on an empty data directory
 ```
+
+Docker sits *inside* `devenv/` rather than the other way round, because a
+development environment is also seed data, fixtures, a local cluster and a
+`direnv` file — none of them containers. Grafana arranges it identically, in
+`devenv/docker/blocks/`.
 
 **This is a deliberate departure from the majority, so here is the count and the
 cost.** Across forty-seven repositories, **24 keep the shipping `Dockerfile` at
@@ -155,8 +164,7 @@ the `Makefile` — `make image`, `make up`, `make down`, `make logs` — which i
 nothing here should be invoked with a raw `docker` command.
 
 Growth is already decided: a second image becomes `docker/<name>/Dockerfile`, a
-second local stack becomes `docker/devenv/<name>/` — the shape Grafana uses in
-`devenv/docker/blocks/`.
+second local stack becomes `devenv/docker/<name>/`.
 
 ## Notebooks
 
@@ -181,9 +189,9 @@ inside the gate. Mypy does not read them; that hole is real and named.
   is the first thing to add once you know where the artifact goes.
 - **Coverage gate, `.importlinter`, `exclude-newer` cooldown** — all defensible,
   none decidable before there is code to measure, layer or pin.
-- **A second image directory, a second `devenv/` stack, `db/migrations` content**
-  — created when earned, per the rules above. The rule is written down so the
-  decision is not made twice.
+- **A second image, a second local stack, `db/migrations` content** — created
+  when earned, per the rules above. The rule is written down so the decision is
+  not made twice.
 
 ## Honesty about what this is
 

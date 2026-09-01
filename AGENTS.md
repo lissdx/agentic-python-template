@@ -32,7 +32,8 @@ boundary is enforced by the build, not by convention.
 | ○ `src/agent_template/gen/` | output of code generators | yes |
 | `tests/unit/`, `tests/integration/` | tests | no |
 | `notebooks/` | exploration and teaching material | no |
-| `docker/` | the image, the local stack, and what those containers need | no |
+| `docker/` | the image this repository builds | no |
+| `devenv/` | the local development environment; ships nothing | no |
 | `db/migrations/` | schema history, executed by a migration tool | no |
 | `docs/`, `examples/`, `scripts/`, `deploy/` | developer-facing material | no |
 | `.github/workflows/` | CI | no |
@@ -55,18 +56,24 @@ Two boundaries inside the package are deliberate:
   calls the second and never the first. Collapsing them is the same mistake as
   putting a test inside the code it tests.
 
-## Containers
+## Containers and the local environment
 
-**Everything container-related lives under `docker/`, and nothing about
-containers appears at the repository root.** See [docker/README.md](docker/README.md).
+Nothing about containers appears at the repository root. The two halves split on
+the same rule the package follows one level down — **what ships versus what only
+a developer needs.** See [docker/README.md](docker/README.md) and
+[devenv/README.md](devenv/README.md).
 
 | Path | What it is |
 |---|---|
 | `docker/Dockerfile` | the image this repository builds |
 | `docker/Dockerfile.dockerignore` | its build context — BuildKit reads it from beside the Dockerfile |
-| `docker/devenv/compose.yaml` | the local stack |
-| `docker/devenv/compose.override.yaml` | development only: exposed ports, bind mounts, debug logging |
-| `docker/postgres/init.sql` | runs once, on an empty data directory |
+| `devenv/docker/compose.yaml` | the local stack |
+| `devenv/docker/compose.override.yaml` | development only: exposed ports, bind mounts, debug logging |
+| `devenv/docker/postgres/init.sql` | runs once, on an empty data directory |
+
+Docker is one mechanism inside `devenv/`, not its organising idea: seed data,
+fixtures, a local cluster and a `direnv` file are development environment too and
+are not containers. Grafana arranges it the same way, in `devenv/docker/blocks/`.
 
 Two consequences, both absorbed by the `Makefile` — **never invoke `docker` or
 `docker compose` here by hand:**
@@ -79,7 +86,7 @@ Two consequences, both absorbed by the `Makefile` — **never invoke `docker` or
   the repository root.
 
 Growth: a second image becomes `docker/<name>/Dockerfile`; a second stack becomes
-`docker/devenv/<name>/`.
+`devenv/docker/<name>/`.
 
 ## Notebooks
 

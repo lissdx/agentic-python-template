@@ -1,54 +1,34 @@
 # docker/
 
-Everything about containers lives here — the image, the local stack, and the
-files those containers need. The repository root stays free of them.
+The image this repository builds, and nothing that only runs on a developer's
+machine — that half lives in [`devenv/`](../devenv/README.md).
 
 ```
 docker/
-├── Dockerfile                    the image this repository builds
-├── Dockerfile.dockerignore       its build context; see the note below
-├── devenv/
-│   ├── compose.yaml              the local stack
-│   └── compose.override.yaml     dev only: exposed port, bind mount, debug logs
-└── postgres/
-    └── init.sql                  runs once, on an empty data directory
+├── Dockerfile                 two stages: build the environment, ship what runs
+└── Dockerfile.dockerignore    the build context
 ```
 
-## Use the Makefile, not the raw commands
+## Two defaults this costs, both paid in the Makefile
 
-Two things stop working the moment these files leave the root, and both are
-handled once in the `Makefile` rather than remembered every time:
+Keeping the Dockerfile out of the repository root is a deliberate choice — the
+count across forty-seven surveyed repositories is 24 root against 17 in a
+directory. What it buys is a readable root. What it costs:
 
-- `docker build .` no longer finds the Dockerfile — it needs
-  `-f docker/Dockerfile`. `make image` carries it.
-- Compose resolves relative paths **and reads `.env`** from its project
-  directory, which defaults to the directory of the first `-f` file. Left alone
-  it would look in `docker/devenv/`. `make up` passes `--project-directory .`,
-  which pins both to the repository root — so every path inside `compose.yaml`
-  is written the way a person reads it, from the root.
+- `docker build .` looks for `Dockerfile` at the root of the context and does not
+  find it, so every invocation needs `-f docker/Dockerfile`. `make image` carries
+  it. **Do not call `docker build` here by hand.**
+- The ignore-file cannot simply move with it: Docker reads `.dockerignore` from
+  the root of the **build context**, which is the repository root. BuildKit adds
+  the way out — *"Place your ignore-file in the same directory as the Dockerfile,
+  and prefix the ignore-file with the name of the Dockerfile"*, and *"a
+  Dockerfile-specific ignore-file takes precedence over the `.dockerignore` file
+  at the root of the build context if both exist."* Hence
+  `Dockerfile.dockerignore`. It requires BuildKit, the default builder since
+  Docker 23.
 
-```
-make up                  start everything      make up SERVICES=db   only the database
-make down                stop                  make down VOLUMES=1   stop and discard data
-make logs                follow the logs
-make image               build the image and run it
-```
+## When a second image appears
 
-## The ignore-file's name is not a typo
-
-Docker looks for `.dockerignore` at the root of the **build context**, which is
-the repository root — not next to the Dockerfile. BuildKit adds a second option:
-*"Place your ignore-file in the same directory as the Dockerfile, and prefix the
-ignore-file with the name of the Dockerfile"*, and *"a Dockerfile-specific
-ignore-file takes precedence over the `.dockerignore` file at the root of the
-build context if both exist."* That is why this one is `Dockerfile.dockerignore`
-and lives here. It requires BuildKit, which has been the default builder since
-Docker 23.
-
-## When this grows
-
-- **A second image** gets its own subdirectory: `docker/api/Dockerfile`,
-  `docker/worker/Dockerfile`, each with its own ignore-file beside it.
-- **A second local stack** gets its own subdirectory under `devenv/`:
-  `docker/devenv/minimal/`, `docker/devenv/full/`, `docker/devenv/cloud/` — the
-  shape Grafana uses in `devenv/docker/blocks/`.
+Each gets its own subdirectory with its ignore-file beside it —
+`docker/api/Dockerfile`, `docker/worker/Dockerfile`. That is the arrangement
+Woodpecker uses for seven images and n8n for five.

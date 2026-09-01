@@ -25,7 +25,7 @@ services:
       - db-data:/var/lib/postgresql/data
       # Runs once, on an empty data directory only. Re-running it means removing
       # the volume — that is Postgres' behaviour, not a bug in this file.
-      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/10-init.sql:ro
+      - ./devenv/docker/postgres/init.sql:/docker-entrypoint-initdb.d/10-init.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-app} -d ${POSTGRES_DB:-app}"]
       interval: 5s

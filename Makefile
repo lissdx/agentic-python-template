@@ -35,11 +35,11 @@ notebooks-clean:  ## Strip outputs from experiment notebooks, in place
 
 check: lint format-check typecheck test notebooks  ## Everything CI gates on, in CI order
 
-# Everything docker lives under docker/, so every invocation says where to look.
+# The local stack lives under devenv/, so every invocation says where to look.
 # --project-directory pins relative paths and .env to the repository root; without
-# it Compose would resolve both against docker/devenv/.
+# it Compose would resolve both against devenv/docker/.
 COMPOSE = docker compose --project-directory . \
-          -f docker/devenv/compose.yaml -f docker/devenv/compose.override.yaml
+          -f devenv/docker/compose.yaml -f devenv/docker/compose.override.yaml
 
 up:  ## Start the local stack; add SERVICES="db" for just one
 	$(COMPOSE) up -d $(SERVICES)

@@ -32,9 +32,10 @@ build
 *token*.json
 
 # Nothing here runs in the image. `docker/` included: the Dockerfile is read by
-# the client through -f, not copied from the context, and leaving the directory
-# in would make an edit to compose.yaml invalidate the source layer.
+# the client through -f, not copied from the context. `devenv/` even more so —
+# it is by definition the half that never leaves this machine.
 docker
+devenv
 docs
 examples
 notebooks
