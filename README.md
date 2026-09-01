@@ -120,9 +120,22 @@ still judge the way we judged*. The first is deterministic; the second is not.
 
 ## Containers, and where they live
 
-Counted across forty-seven repositories: **24 keep the shipping `Dockerfile` at
-the repository root, 17 keep it in a directory.** It is not fashion — what
-predicts it is how many images the repository builds.
+Everything container-related lives under `docker/`:
+
+```
+docker/
+├── Dockerfile                    the image; CI builds it and runs it
+├── Dockerfile.dockerignore       BuildKit reads it from beside the Dockerfile
+├── devenv/
+│   ├── compose.yaml              the local stack: Postgres with pgvector
+│   └── compose.override.yaml     dev only: exposed port, bind mount, debug logs
+└── postgres/init.sql             runs once, on an empty data directory
+```
+
+**This is a deliberate departure from the majority, so here is the count and the
+cost.** Across forty-seven repositories, **24 keep the shipping `Dockerfile` at
+the repository root and 17 keep it in a directory.** What predicts the split is
+not fashion but how many images a repository builds:
 
 | Images built | Where they go | Who does it |
 |---|---|---|
@@ -130,27 +143,20 @@ predicts it is how many images the repository builds.
 | several distinct services | each in its own directory | Jaeger `cmd/<binary>/`, Zitadel `apps/api/`, Immich `server/`, Sentry `self-hosted/` |
 | many variants of the same binaries | one dedicated directory | Woodpecker `docker/` (seven), n8n `docker/images/`, Kubernetes `build/` |
 
-The Go ecosystem answers this differently and says so in writing:
-`golang-standards/project-layout` puts container packaging in `/build/package` and
-compose files in `/deployments`, and has no `/docker` at all. Engineers arriving
-from Go expect that; this template does not follow it, because `docker build .`
-finds a root `Dockerfile` for free and every displaced one costs a `-f` flag in
-every invocation and every CI action, forever.
+The Go ecosystem answers it in writing: `golang-standards/project-layout` puts
+container packaging in `/build/package` and compose files in `/deployments`, and
+has no `/docker` at all.
 
-So, with one image and one local stack:
+**What the directory costs:** `docker build .` no longer finds the Dockerfile,
+and Compose resolves relative paths and reads `.env` from the directory of the
+first `-f` file rather than from the root. **What it buys:** one place for every
+container concern and a root that stays readable. Both costs are paid once, in
+the `Makefile` — `make image`, `make up`, `make down`, `make logs` — which is why
+nothing here should be invoked with a raw `docker` command.
 
-```
-Dockerfile                the image; CI builds it and runs it
-.dockerignore
-compose.yaml              the local stack: Postgres with pgvector
-compose.override.yaml     dev only — exposed port, bind mount; merged automatically
-docker/                   what those containers need: postgres/init.sql
-```
-
-**And the rule that saves having this argument twice:** a second image moves both
-into `docker/<name>/Dockerfile`; a second local stack moves both into
-`devenv/<name>/`, which is what Grafana does in `devenv/docker/blocks/`. Neither
-directory is created before it is earned.
+Growth is already decided: a second image becomes `docker/<name>/Dockerfile`, a
+second local stack becomes `docker/devenv/<name>/` — the shape Grafana uses in
+`devenv/docker/blocks/`.
 
 ## Notebooks
 
@@ -175,9 +181,9 @@ inside the gate. Mypy does not read them; that hole is real and named.
   is the first thing to add once you know where the artifact goes.
 - **Coverage gate, `.importlinter`, `exclude-newer` cooldown** — all defensible,
   none decidable before there is code to measure, layer or pin.
-- **`devenv/`, `db/migrations` content, a second image directory** — created when
-  earned, per the rules above. The rule is written down so the decision is not
-  made twice.
+- **A second image directory, a second `devenv/` stack, `db/migrations` content**
+  — created when earned, per the rules above. The rule is written down so the
+  decision is not made twice.
 
 ## Honesty about what this is
 

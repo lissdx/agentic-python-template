@@ -1,0 +1,46 @@
+# The build context is the REPOSITORY ROOT, not this directory — paths below are
+# written from there. Without these lines a local .venv and the whole .git
+# history are uploaded to the daemon on every build: slow, and a way for secrets
+# to reach an image layer.
+#
+# Named after the Dockerfile beside it: BuildKit reads
+# <dockerfile-name>.dockerignore from the Dockerfile's own directory, and it
+# takes precedence over a .dockerignore at the context root.
+
+.git
+.github
+.venv
+venv
+**/__pycache__
+*.py[cod]
+.mypy_cache
+.pytest_cache
+.ruff_cache
+htmlcov
+.coverage
+dist
+build
+*.egg-info
+
+# Secrets and local state.
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*credentials*.json
+*token*.json
+
+# Nothing here runs in the image. `docker/` included: the Dockerfile is read by
+# the client through -f, not copied from the context, and leaving the directory
+# in would make an edit to compose.yaml invalidate the source layer.
+docker
+docs
+examples
+notebooks
+tests
+db
+deploy
+scripts
+*.md
+!README.md

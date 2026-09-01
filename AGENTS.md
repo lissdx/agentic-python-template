@@ -32,7 +32,7 @@ boundary is enforced by the build, not by convention.
 | ○ `src/agent_template/gen/` | output of code generators | yes |
 | `tests/unit/`, `tests/integration/` | tests | no |
 | `notebooks/` | exploration and teaching material | no |
-| `docker/` | files the containers need; no image is defined there | no |
+| `docker/` | the image, the local stack, and what those containers need | no |
 | `db/migrations/` | schema history, executed by a migration tool | no |
 | `docs/`, `examples/`, `scripts/`, `deploy/` | developer-facing material | no |
 | `.github/workflows/` | CI | no |
@@ -57,17 +57,29 @@ Two boundaries inside the package are deliberate:
 
 ## Containers
 
-- **The image this repository builds** is `Dockerfile` at the root — where
-  `docker build .` looks by default. **A second image moves both into
-  `docker/<name>/Dockerfile`.**
-- **The local stack** is `compose.yaml`, with `compose.override.yaml` merged over
-  it automatically by `docker compose`. Development-only settings — exposed
-  ports, bind mounts, debug logging — belong in the override and nowhere else.
-  **A second stack moves both into `devenv/<name>/`.**
-- `docker/` holds what those containers need and is not where images live.
+**Everything container-related lives under `docker/`, and nothing about
+containers appears at the repository root.** See [docker/README.md](docker/README.md).
 
-One of a thing lives where the tool looks for it by default; several of a thing
-get a directory.
+| Path | What it is |
+|---|---|
+| `docker/Dockerfile` | the image this repository builds |
+| `docker/Dockerfile.dockerignore` | its build context — BuildKit reads it from beside the Dockerfile |
+| `docker/devenv/compose.yaml` | the local stack |
+| `docker/devenv/compose.override.yaml` | development only: exposed ports, bind mounts, debug logging |
+| `docker/postgres/init.sql` | runs once, on an empty data directory |
+
+Two consequences, both absorbed by the `Makefile` — **never invoke `docker` or
+`docker compose` here by hand:**
+
+- the build needs `-f docker/Dockerfile`, since `docker build .` looks at the
+  root;
+- Compose resolves relative paths and reads `.env` from its project directory,
+  which defaults to the first `-f` file's directory — so `make up` passes
+  `--project-directory .` and every path inside `compose.yaml` is written from
+  the repository root.
+
+Growth: a second image becomes `docker/<name>/Dockerfile`; a second stack becomes
+`docker/devenv/<name>/`.
 
 ## Notebooks
 
@@ -105,6 +117,7 @@ make install     # sync the environment from uv.lock
 make check       # lint + format + typecheck + test + notebooks, in CI order
 make up          # start the local stack; make down to stop it
 make image       # build the container image and prove it runs
+                 # never call docker/docker compose by hand — paths live in the Makefile
 ```
 
 ## What CI gates

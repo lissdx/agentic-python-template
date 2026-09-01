@@ -1,5 +1,5 @@
-# Development conveniences. Compose reads this file automatically and merges it
-# over compose.yaml — no -f flag, no make target, nothing to remember.
+# Development conveniences, merged over compose.yaml. `make up` passes both files
+# explicitly, so the merge happens the same way from any working directory.
 #
 # Everything here is true only on a developer's machine. Nothing in this file
 # should ever be needed in a deployment.

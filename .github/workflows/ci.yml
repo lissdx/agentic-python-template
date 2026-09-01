@@ -47,8 +47,13 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
+      - name: The local stack definition resolves
+        # Renders the merged model, which fails if a path in compose.yaml does
+        # not resolve — the exact thing that breaks when these files move.
+        run: make compose-check
+
       - name: Build the image
-        run: docker build -t agent-template:ci .
+        run: docker build -f docker/Dockerfile -t agent-template:ci .
 
       - name: The image runs
         # A Dockerfile that builds but was never started is an untested artifact.

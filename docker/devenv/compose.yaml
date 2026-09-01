@@ -1,9 +1,14 @@
 # The local stack: what has to be running for the project to work on this
-# machine. `docker compose up` also reads compose.override.yaml and merges it —
+# machine. compose.override.yaml sits beside this file and is merged over it —
 # development conveniences live there, not here.
 #
-# Only the dependency:  docker compose up db
-# Everything:           docker compose up
+# Every path below is relative to the REPOSITORY ROOT, not to this directory.
+# Compose resolves relative paths and reads .env from the project directory,
+# which defaults to the directory of the first -f file — so `make up` passes
+# `--project-directory .` and pins it to the root. Run it through the Makefile:
+#
+#   make up            everything          make up SERVICES=db     only the database
+#   make down          stop                make down VOLUMES=1     stop and discard data
 
 name: agent-template
 
@@ -30,7 +35,10 @@ services:
 
   app:
     build:
+      # The context is the repository root — that is what has to be copied into
+      # the image. The Dockerfile path is relative to the context, not to here.
       context: .
+      dockerfile: docker/Dockerfile
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-app}:${POSTGRES_PASSWORD:-app}@db:5432/${POSTGRES_DB:-app}
     depends_on:

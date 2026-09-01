@@ -4,7 +4,7 @@
 
 .DEFAULT_GOAL := help
 .PHONY: help install lint format format-check typecheck test notebooks notebooks-clean \
-        check up down logs image rename clean
+        check up down logs compose-check image rename clean
 
 help:  ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-16s\033[0m %s\n", $$1, $$2}'
@@ -35,17 +35,26 @@ notebooks-clean:  ## Strip outputs from experiment notebooks, in place
 
 check: lint format-check typecheck test notebooks  ## Everything CI gates on, in CI order
 
-up:  ## Start the local stack (compose.override.yaml is merged automatically)
-	docker compose up -d
+# Everything docker lives under docker/, so every invocation says where to look.
+# --project-directory pins relative paths and .env to the repository root; without
+# it Compose would resolve both against docker/devenv/.
+COMPOSE = docker compose --project-directory . \
+          -f docker/devenv/compose.yaml -f docker/devenv/compose.override.yaml
+
+up:  ## Start the local stack; add SERVICES="db" for just one
+	$(COMPOSE) up -d $(SERVICES)
 
 down:  ## Stop the local stack; add VOLUMES=1 to discard its data
-	docker compose down $(if $(VOLUMES),--volumes,)
+	$(COMPOSE) down $(if $(VOLUMES),--volumes,)
 
 logs:  ## Follow the local stack's logs
-	docker compose logs -f
+	$(COMPOSE) logs -f
+
+compose-check:  ## Validate the local stack definition without starting anything
+	$(COMPOSE) config --quiet
 
 image:  ## Build the container image and prove it runs
-	docker build -t agent-template:dev .
+	docker build -f docker/Dockerfile -t agent-template:dev .
 	docker run --rm agent-template:dev
 
 # >>> template-only: this target and its script delete themselves on first use.
