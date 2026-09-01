@@ -20,6 +20,7 @@ CI runs this against the tree and then runs the full gate on the result, so
 """
 
 import argparse
+import ast
 import re
 import shutil
 import subprocess
@@ -56,6 +57,11 @@ MAKEFILE_BLOCK = re.compile(
 )
 
 VALID_NAME = re.compile(r"^[a-z][a-z0-9]*(-[a-z0-9]+)*$")
+
+# A subpackage whose docstring opens with this word is part of the menu, not of
+# the minimum. The marker lives in the docstring rather than in a list here, so
+# there is one source of truth and it is the one a reader already sees.
+OPTIONAL_MARKER = "Optional."
 
 
 def to_module(dist_name: str) -> str:
@@ -100,6 +106,20 @@ def rewrite(paths: list[Path], dist: str, module: str, class_prefix: str) -> int
     return changed
 
 
+def drop_optional_packages(package: Path) -> list[str]:
+    """Delete every subpackage whose docstring opens with `Optional.`."""
+    dropped: list[str] = []
+    for init in sorted(package.glob("*/__init__.py")):
+        try:
+            docstring = ast.get_docstring(ast.parse(init.read_text(encoding="utf-8")))
+        except SyntaxError:
+            continue
+        if docstring and docstring.startswith(OPTIONAL_MARKER):
+            shutil.rmtree(init.parent)
+            dropped.append(init.parent.name)
+    return dropped
+
+
 def strip_template_only(root: Path) -> None:
     """Remove the artefacts that exist only to serve the template itself."""
     (root / ".github" / "workflows" / "template.yml").unlink(missing_ok=True)
@@ -110,14 +130,6 @@ def strip_template_only(root: Path) -> None:
         text = MAKEFILE_BLOCK.sub("\n", text)
         text = text.replace(" rename clean", " clean")
         makefile.write_text(text, encoding="utf-8")
-
-    # This script is the only thing in scripts/, and mypy treats a configured
-    # directory with no .py files in it as an error rather than as empty.
-    pyproject = root / "pyproject.toml"
-    if pyproject.is_file():
-        text = pyproject.read_text(encoding="utf-8")
-        text = text.replace('["src", "tests", "scripts"]', '["src", "tests"]')
-        pyproject.write_text(text, encoding="utf-8")
 
 
 def reformat(root: Path) -> bool:
@@ -133,6 +145,11 @@ def reformat(root: Path) -> bool:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Rename this template into a project.")
     parser.add_argument("--name", required=True, help="distribution name, e.g. my-project")
+    parser.add_argument(
+        "--drop-optional",
+        action="store_true",
+        help="delete the subpackages marked Optional. in their docstring",
+    )
     parser.add_argument("--root", type=Path, default=ROOT, help="tree to rewrite")
     args = parser.parse_args(argv)
 
@@ -156,6 +173,8 @@ def main(argv: list[str] | None = None) -> int:
     changed = rewrite(iter_text_files(root), dist, module, to_class_prefix(module))
     package.rename(root / "src" / module)
 
+    dropped = drop_optional_packages(root / "src" / module) if args.drop_optional else []
+
     # The template's own README explains the layout; a project needs its own.
     stub = root / "README.project.md"
     if stub.is_file():
@@ -165,13 +184,24 @@ def main(argv: list[str] | None = None) -> int:
     formatted = reformat(root)
 
     print(f"Renamed to '{dist}' (module '{module}') across {changed} files.")
+    if dropped:
+        print(f"Dropped optional packages: {', '.join(dropped)}.")
+    else:
+        optional = [
+            init.parent.name
+            for init in sorted((root / "src" / module).glob("*/__init__.py"))
+            if (doc := ast.get_docstring(ast.parse(init.read_text(encoding="utf-8"))))
+            and doc.startswith(OPTIONAL_MARKER)
+        ]
+        if optional:
+            print(f"Optional packages kept: {', '.join(optional)} — delete what you do not need.")
     if not formatted:
         print("ruff was not on PATH — run `make format` before committing.", file=sys.stderr)
     print("Next: fill in README.md, then set description/keywords/authors in pyproject.toml.")
 
-    SELF.unlink(missing_ok=True)  # nothing left for this script to do
-    if SELF.parent.is_dir() and not any(SELF.parent.iterdir()):
-        SELF.parent.rmdir()
+    # Nothing left for this script to do. scripts/ survives — the notebook gate
+    # lives there and is part of the generated project.
+    SELF.unlink(missing_ok=True)
     return 0
 
 

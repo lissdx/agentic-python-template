@@ -1,0 +1,44 @@
+# The local stack: what has to be running for the project to work on this
+# machine. `docker compose up` also reads compose.override.yaml and merges it —
+# development conveniences live there, not here.
+#
+# Only the dependency:  docker compose up db
+# Everything:           docker compose up
+
+name: agent-template
+
+services:
+  db:
+    # pgvector ships Postgres with the extension already built, which is the
+    # difference between one image and a Dockerfile nobody wanted to write.
+    image: pgvector/pgvector:pg18
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-app}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-app}
+      POSTGRES_DB: ${POSTGRES_DB:-app}
+    volumes:
+      - db-data:/var/lib/postgresql/data
+      # Runs once, on an empty data directory only. Re-running it means removing
+      # the volume — that is Postgres' behaviour, not a bug in this file.
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/10-init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-app} -d ${POSTGRES_DB:-app}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  app:
+    build:
+      context: .
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-app}:${POSTGRES_PASSWORD:-app}@db:5432/${POSTGRES_DB:-app}
+    depends_on:
+      db:
+        # Waits for the healthcheck, not merely for the container to exist.
+        # Without the condition, the app starts against a database that is still
+        # initialising and fails on first connection.
+        condition: service_healthy
+
+volumes:
+  db-data:

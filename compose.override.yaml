@@ -1,0 +1,21 @@
+# Development conveniences. Compose reads this file automatically and merges it
+# over compose.yaml — no -f flag, no make target, nothing to remember.
+#
+# Everything here is true only on a developer's machine. Nothing in this file
+# should ever be needed in a deployment.
+
+services:
+  db:
+    ports:
+      # Exposed so a local client, a migration tool or a notebook can reach it.
+      # Deliberately not 5432: that port is usually already taken by a Postgres
+      # someone installed and forgot.
+      - "${POSTGRES_PORT:-55432}:5432"
+
+  app:
+    volumes:
+      # Source is mounted over the image's copy, so an edit is visible without a
+      # rebuild. The image still has its own copy — this only shadows it.
+      - ./src:/app/src:ro
+    environment:
+      LOG_LEVEL: DEBUG

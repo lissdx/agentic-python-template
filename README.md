@@ -7,8 +7,11 @@ tooling and the CI gate, with the reason for each decision written next to it.
 
 ```bash
 make rename NAME=my-project    # renames the package everywhere, refreshes the lock
+                               # add DROP_OPTIONAL=1 to keep only the core
 make install
-make check                     # lint → typecheck → test, the order CI runs
+make check                     # lint → format → types → tests → notebooks, in CI order
+make up                        # the local stack: Postgres with pgvector
+make image                     # build the container image and run it
 ```
 
 That is the whole setup. `make check` is green on a fresh clone before you have
@@ -89,6 +92,17 @@ not — open the `__init__.py` rather than guessing from the name.
 | `evaluators/` | the **graders**: output + gold label → score |
 | `evals/` | the **runs**: dataset, drive the system, apply evaluators, report |
 | `exceptions.py` | the error taxonomy, one root class |
+| ○ `memory/` | what the agent remembers across turns and runs |
+| ○ `persistence/` | what outlives the process: checkpoints, repositories |
+| ○ `safety/` | guardrails that run **during** a request and can stop it |
+| ○ `hitl/` | approval, escalation, and the resume path afterwards |
+| ○ `gen/` | output of code generators; committed, never hand-edited |
+
+**○ is the menu, not the minimum.** Those five ship so the decision is visible in
+the GitHub tree without cloning, and each one's docstring opens with the word
+`Optional.` — which is also the marker `make rename DROP_OPTIONAL=1` reads to
+delete them. Keeping one you do not use makes the tree lie about your
+architecture, so delete it; the flag does it for you at generation time.
 
 Two boundaries there are worth stating out loud, because both are routinely
 collapsed:
@@ -104,21 +118,66 @@ collapsed:
 *does this code do what it was written to do*, `evals/` asks *does the system
 still judge the way we judged*. The first is deterministic; the second is not.
 
+## Containers, and where they live
+
+Counted across forty-seven repositories: **24 keep the shipping `Dockerfile` at
+the repository root, 17 keep it in a directory.** It is not fashion — what
+predicts it is how many images the repository builds.
+
+| Images built | Where they go | Who does it |
+|---|---|---|
+| one | repository root | Grafana, Prometheus, Vault, Terraform, etcd, MinIO, Traefik, Airflow, Consul, InfluxDB, Thanos, Superset |
+| several distinct services | each in its own directory | Jaeger `cmd/<binary>/`, Zitadel `apps/api/`, Immich `server/`, Sentry `self-hosted/` |
+| many variants of the same binaries | one dedicated directory | Woodpecker `docker/` (seven), n8n `docker/images/`, Kubernetes `build/` |
+
+The Go ecosystem answers this differently and says so in writing:
+`golang-standards/project-layout` puts container packaging in `/build/package` and
+compose files in `/deployments`, and has no `/docker` at all. Engineers arriving
+from Go expect that; this template does not follow it, because `docker build .`
+finds a root `Dockerfile` for free and every displaced one costs a `-f` flag in
+every invocation and every CI action, forever.
+
+So, with one image and one local stack:
+
+```
+Dockerfile                the image; CI builds it and runs it
+.dockerignore
+compose.yaml              the local stack: Postgres with pgvector
+compose.override.yaml     dev only — exposed port, bind mount; merged automatically
+docker/                   what those containers need: postgres/init.sql
+```
+
+**And the rule that saves having this argument twice:** a second image moves both
+into `docker/<name>/Dockerfile`; a second local stack moves both into
+`devenv/<name>/`, which is what Grafana does in `devenv/docker/blocks/`. Neither
+directory is created before it is earned.
+
+## Notebooks
+
+`notebooks/` is split into two genres because they want opposite things from
+version control.
+
+- **`experiments/` — outputs stripped, enforced in CI.** Exploration runs against
+  real inputs, and an output carries them into a history that does not forget.
+  This is the cheapest leak channel in a repository and the one nobody watches.
+- **`tutorials/` — outputs kept, data synthetic.** The reader wants to see what
+  the code prints without running it. Ragas keeps outputs in every notebook under
+  `docs/howtos/`; Phoenix does not enforce either way, and across its `tutorials/`
+  some notebooks carry outputs and some do not — nothing says which was intended.
+
+Ruff lints and formats `.ipynb` by default since 0.6, so notebooks are already
+inside the gate. Mypy does not read them; that hole is real and named.
+
 ## What is deliberately **not** here
 
-An empty directory is a claim about a system that does not exist. The tree is
-read as an architecture diagram, so it only contains subsystems that are real.
-
-- **`memory/`, `persistence/`, `safety/`, `hitl/`, `gen/`, `simulations/`** —
-  part of the layout when the subsystem exists. Create them then, with a
-  docstring, not now.
-- **`Dockerfile` / `docker-compose.yml`** — a container encodes a deployment
-  shape this template cannot know, and an untested Dockerfile is worse than none.
-- **Release automation** — publishing target (PyPI, an image, nothing at all)
+- **Release automation** — the publishing target (PyPI, an image, nothing at all)
   differs per project; twelve of thirteen surveyed repositories have it, and it
   is the first thing to add once you know where the artifact goes.
 - **Coverage gate, `.importlinter`, `exclude-newer` cooldown** — all defensible,
   none decidable before there is code to measure, layer or pin.
+- **`devenv/`, `db/migrations` content, a second image directory** — created when
+  earned, per the rules above. The rule is written down so the decision is not
+  made twice.
 
 ## Honesty about what this is
 
