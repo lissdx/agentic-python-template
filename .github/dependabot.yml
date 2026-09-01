@@ -1,0 +1,17 @@
+# Dependency updates. Present in twelve of the thirteen repositories surveyed —
+# and absent from the written standard until this template was built, which is
+# how the gap was found.
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+
+  - package-ecosystem: "uv"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    groups:
+      dev-tooling:
+        patterns: ["ruff", "mypy", "pytest*"]

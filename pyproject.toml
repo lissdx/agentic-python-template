@@ -1,0 +1,48 @@
+[project]
+name = "agent-template"
+version = "0.1.0"
+description = "The layout an agentic Python project starts from."
+readme = "README.md"
+requires-python = ">=3.14"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "lissdx" }]
+keywords = ["agents", "llm", "template", "project-structure", "python"]
+dependencies = []
+
+# Only what the repository itself needs. Not shipped to anyone installing the
+# package — that is the whole reason PEP 735 groups exist and
+# [project.optional-dependencies] is the wrong home for tooling.
+[dependency-groups]
+lint = ["ruff>=0.14"]
+typecheck = ["mypy>=1.18"]
+tests = ["pytest>=9.0"]
+dev = [{ include-group = "lint" }, { include-group = "typecheck" }, { include-group = "tests" }]
+
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+# Only what ships. Anything outside this path is not importable at runtime,
+# which is why tests/ and docs/ live above src/ while evals/ lives inside it.
+packages = ["src/agent_template"]
+
+[tool.ruff]
+line-length = 100
+src = ["src", "tests", "scripts"]
+# target-version is deliberately NOT set: ruff derives it from requires-python,
+# so the floor is stated once.
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "RUF"]
+ignore = ["E501"]
+
+[tool.mypy]
+python_version = "3.14"
+strict = true
+files = ["src", "tests", "scripts"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"

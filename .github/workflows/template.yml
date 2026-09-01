@@ -1,0 +1,48 @@
+name: Template
+
+# Proves the template's own claim: that `make rename` turns this tree into a
+# working project with no template residue left in it. A check nothing triggers
+# is documentation, not a gate — so the rename runs here on every change and the
+# full pipeline runs on its output.
+#
+# `scripts/rename_package.py` deletes this workflow as part of the rename, which
+# is why a project generated from the template does not inherit it.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  rename:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: "0.11.16"
+          enable-cache: true
+
+      - name: Rename the template into a project
+        run: make rename NAME=renamed-probe
+
+      - name: The renamed project still passes every gate
+        run: |
+          uv sync --locked
+          uv run ruff check .
+          uv run ruff format --check .
+          uv run mypy
+          uv run pytest tests/unit
+
+      - name: No template residue is left behind
+        run: |
+          test -d src/renamed_probe
+          test ! -d src/agent_template
+          test ! -f scripts/rename_package.py
+          test ! -f .github/workflows/template.yml
+          test ! -f README.project.md
+          ! grep -q "^rename:" Makefile
+          ! grep -rq "agent_template" --include="*.py" --include="*.toml" --include="*.md" \
+              --exclude-dir=.venv .
