@@ -50,9 +50,10 @@ my machine, red in CI".
 
 ## Why these directories
 
-The reasoning behind every entry is being written from scratch after a research
-pass over ~40 real trees disproved most of the previous version. Follow
-[issue #3](https://github.com/lissdx/agentic-python-template/issues/3).
+One section per path, each with a tier — MUST / SHOULD / MAY — and a link to a
+real tree behind it: **[docs/structure.md](docs/structure.md)**. It also lists
+the directories you should *not* have, and the traps that break a build
+regardless of opinion.
 
 ## Licence
 

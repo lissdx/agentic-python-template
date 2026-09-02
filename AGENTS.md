@@ -7,9 +7,10 @@ source. What this repository is: [README.md](README.md).
 
 This is a skeleton. Directories are the menu; the placeholder names
 (`_your_product_`, `_your_agent_`, `_your_tool_`) mark what a project replaces.
-Put a new file where the README table says it goes. If nothing fits, say so
-instead of inventing a directory — the reasoning for each entry is being
-rewritten under [issue #3](https://github.com/lissdx/agentic-python-template/issues/3).
+Put a new file where **[docs/structure.md](docs/structure.md)** says it goes:
+one section per path, each carrying a tier — MUST / SHOULD / MAY — plus a list of
+directories that must not exist and the traps that break a build. If nothing
+fits, say so instead of inventing a directory.
 
 Two boundaries are deliberate and must not be collapsed:
 
