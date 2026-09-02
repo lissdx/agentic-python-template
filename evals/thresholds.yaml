@@ -1,0 +1,3 @@
+# The pass/fail contract. Data, so a change to it is reviewable on its own.
+faithfulness: 0.80
+answer_relevancy: 0.75

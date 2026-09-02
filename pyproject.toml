@@ -1,5 +1,5 @@
 [project]
-name = "agent-template"
+name = "your-product"
 version = "0.1.0"
 description = "The layout an agentic Python project starts from."
 readme = "README.md"
@@ -8,6 +8,8 @@ license = "MIT"
 license-files = ["LICENSE"]
 authors = [{ name = "lissdx" }]
 keywords = ["agents", "llm", "template", "project-structure", "python"]
+# Deliberately empty: the skeleton pulls nothing into your project. Every stub
+# that would need a library ships its code commented out instead.
 dependencies = []
 
 # Only what the repository itself needs. Not shipped to anyone installing the
@@ -24,13 +26,12 @@ requires = ["hatchling>=1.27"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-# Only what ships. Anything outside this path is not importable at runtime,
-# which is why tests/ and docs/ live above src/ while evals/ lives inside it.
-packages = ["src/agent_template"]
+# Only what ships. evals/ and tests/ sit outside this path on purpose.
+packages = ["src/_your_product_"]
 
 [tool.ruff]
 line-length = 100
-src = ["src", "tests", "scripts"]
+src = ["src", "tests"]
 # target-version is deliberately NOT set: ruff derives it from requires-python,
 # so the floor is stated once.
 
@@ -38,10 +39,17 @@ src = ["src", "tests", "scripts"]
 select = ["E", "F", "I", "UP", "B", "SIM", "RUF"]
 ignore = ["E501"]
 
+[tool.ruff.lint.per-file-ignores]
+# Harnesses and notebooks print for a living. Without this the linter this file
+# prescribes fails on the harness this file prescribes.
+"evals/*" = ["T201"]
+"notebooks/*" = ["T201"]
+
 [tool.mypy]
 python_version = "3.14"
 strict = true
-files = ["src", "tests", "scripts"]
+# scripts/ is not listed: an empty directory here fails the run.
+files = ["src", "tests"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

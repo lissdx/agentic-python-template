@@ -7,46 +7,34 @@
 # which defaults to the directory of the first -f file — so `make up` passes
 # `--project-directory .` and pins it to the root. Run it through the Makefile:
 #
-#   make up            everything          make up SERVICES=db     only the database
+#   make up            everything          make up SERVICES=app    only the app
 #   make down          stop                make down VOLUMES=1     stop and discard data
 
-name: agent-template
+name: your-product
 
 services:
-  db:
-    # pgvector ships Postgres with the extension already built, which is the
-    # difference between one image and a Dockerfile nobody wanted to write.
-    image: pgvector/pgvector:pg18
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER:-app}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-app}
-      POSTGRES_DB: ${POSTGRES_DB:-app}
-    volumes:
-      - db-data:/var/lib/postgresql/data
-      # Runs once, on an empty data directory only. Re-running it means removing
-      # the volume — that is Postgres' behaviour, not a bug in this file.
-      - ./devenv/docker/postgres/init.sql:/docker-entrypoint-initdb.d/10-init.sql:ro
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-app} -d ${POSTGRES_DB:-app}"]
-      interval: 5s
-      timeout: 3s
-      retries: 10
-    restart: unless-stopped
-
   app:
     build:
       # The context is the repository root — that is what has to be copied into
       # the image. The Dockerfile path is relative to the context, not to here.
       context: .
       dockerfile: docker/Dockerfile
-    environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER:-app}:${POSTGRES_PASSWORD:-app}@db:5432/${POSTGRES_DB:-app}
-    depends_on:
-      db:
-        # Waits for the healthcheck, not merely for the container to exist.
-        # Without the condition, the app starts against a database that is still
-        # initialising and fails on first connection.
-        condition: service_healthy
 
-volumes:
-  db-data:
+  # A database is a choice, not part of the skeleton — uncomment when you make it.
+  #
+  # db:
+  #   image: pgvector/pgvector:pg18
+  #   environment:
+  #     POSTGRES_USER: ${POSTGRES_USER:-app}
+  #     POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-app}
+  #     POSTGRES_DB: ${POSTGRES_DB:-app}
+  #   volumes:
+  #     - db-data:/var/lib/postgresql/data
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-app}"]
+  #     interval: 5s
+  #     timeout: 3s
+  #     retries: 10
+  #
+  # volumes:
+  #   db-data:

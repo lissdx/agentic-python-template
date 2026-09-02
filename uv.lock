@@ -7,39 +7,6 @@ resolution-markers = [
 ]
 
 [[package]]
-name = "agent-template"
-version = "0.1.0"
-source = { editable = "." }
-
-[package.dev-dependencies]
-dev = [
-    { name = "mypy" },
-    { name = "pytest" },
-    { name = "ruff" },
-]
-lint = [
-    { name = "ruff" },
-]
-tests = [
-    { name = "pytest" },
-]
-typecheck = [
-    { name = "mypy" },
-]
-
-[package.metadata]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "mypy", specifier = ">=1.18" },
-    { name = "pytest", specifier = ">=9.0" },
-    { name = "ruff", specifier = ">=0.14" },
-]
-lint = [{ name = "ruff", specifier = ">=0.14" }]
-tests = [{ name = "pytest", specifier = ">=9.0" }]
-typecheck = [{ name = "mypy", specifier = ">=1.18" }]
-
-[[package]]
 name = "ast-serialize"
 version = "0.8.0"
 source = { registry = "https://pypi.org/simple" }
@@ -327,3 +294,36 @@ sdist = { url = "https://files.pythonhosted.org/packages/f6/cc/6253133b5bb138fc3
 wheels = [
     { url = "https://files.pythonhosted.org/packages/49/d3/b8441a820a491ddfc024b0b0cf0393375b75ea13866d9c66727e54c2fc80/typing_extensions-4.16.0-py3-none-any.whl", hash = "sha256:481caa481374e813c1b176ada14e97f1f67a4539ce9cfeb3f350d78d6370c2e8", size = 45571, upload-time = "2026-07-02T08:40:04.659Z" },
 ]
+
+[[package]]
+name = "your-product"
+version = "0.1.0"
+source = { editable = "." }
+
+[package.dev-dependencies]
+dev = [
+    { name = "mypy" },
+    { name = "pytest" },
+    { name = "ruff" },
+]
+lint = [
+    { name = "ruff" },
+]
+tests = [
+    { name = "pytest" },
+]
+typecheck = [
+    { name = "mypy" },
+]
+
+[package.metadata]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "mypy", specifier = ">=1.18" },
+    { name = "pytest", specifier = ">=9.0" },
+    { name = "ruff", specifier = ">=0.14" },
+]
+lint = [{ name = "ruff", specifier = ">=0.14" }]
+tests = [{ name = "pytest", specifier = ">=9.0" }]
+typecheck = [{ name = "mypy", specifier = ">=1.18" }]

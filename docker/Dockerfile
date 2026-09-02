@@ -47,4 +47,4 @@ ENV PATH="/app/.venv/bin:$PATH" \
 WORKDIR /app
 USER app
 
-CMD ["python", "-m", "agent_template.cli"]
+CMD ["python", "-m", "_your_product_.cli"]

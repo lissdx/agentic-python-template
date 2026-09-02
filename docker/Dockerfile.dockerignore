@@ -41,7 +41,7 @@ examples
 notebooks
 tests
 db
-deploy
+evals
 scripts
 *.md
 !README.md

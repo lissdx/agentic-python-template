@@ -22,23 +22,19 @@ jobs:
         run: uv sync --locked
 
       - name: Ruff (lint)
-        # Notebooks are included: ruff lints and formats .ipynb by default since 0.6.
         run: uv run ruff check .
 
       - name: Ruff (format)
         run: uv run ruff format --check .
 
       - name: Mypy (strict)
-        # The one gate present in all thirteen repositories surveyed: types fail
-        # the build. A type-checker sitting in dev-dependencies is documentation.
+        # The gate the four official LangChain agent templates all run as
+        # `mypy --strict src/`. A type-checker sitting in dev-dependencies is
+        # documentation, not a gate.
         run: uv run mypy
 
       - name: Pytest (unit)
         run: uv run pytest tests/unit
-
-      - name: Notebooks carry no outputs
-        # Only notebooks/experiments/. Tutorials keep their outputs on purpose.
-        run: uv run python scripts/check_notebook_outputs.py
 
   image:
     runs-on: ubuntu-latest
@@ -53,8 +49,8 @@ jobs:
         run: make compose-check
 
       - name: Build the image
-        run: docker build -f docker/Dockerfile -t agent-template:ci .
+        run: docker build -f docker/Dockerfile -t your-product:ci .
 
       - name: The image runs
         # A Dockerfile that builds but was never started is an untested artifact.
-        run: docker run --rm agent-template:ci
+        run: docker run --rm your-product:ci

@@ -5,13 +5,6 @@
 # should ever be needed in a deployment.
 
 services:
-  db:
-    ports:
-      # Exposed so a local client, a migration tool or a notebook can reach it.
-      # Deliberately not 5432: that port is usually already taken by a Postgres
-      # someone installed and forgot.
-      - "${POSTGRES_PORT:-55432}:5432"
-
   app:
     volumes:
       # Source is mounted over the image's copy, so an edit is visible without a
