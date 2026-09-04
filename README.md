@@ -30,12 +30,14 @@ Placeholders say so in their names: `_your_product_`, `_your_agent_`,
 | `tests/unit`, `tests/integration` | split by "does it need real I/O" |
 | `evals/` | datasets, judges, thresholds and the gate — outside the package on purpose |
 | `db/migrations/` | run by a migration tool, never imported by Python |
+| `data/` | local working data; nothing in it is committed by default — its README says why |
 | `docker/`, `devenv/` | what ships, and what only ever runs on your machine |
 | `notebooks/`, `examples/`, `scripts/`, `docs/` | developer-facing; not in the wheel |
+| `.github/` | the CI that runs the gate, and dependabot watching the pinned actions |
 
 ## The gate
 
-`make check` runs exactly what CI runs, in the same order:
+`make check` runs exactly what CI's `check` job runs, in the same order:
 
 ```
 ruff check .            find mistakes
@@ -47,6 +49,9 @@ pytest tests/unit
 The first three are what all four official LangChain agent templates gate on.
 The format check is our own addition — it costs one line and prevents "green on
 my machine, red in CI".
+
+CI runs one job more: the local stack definition resolves (`make
+compose-check`), the image builds, and the built image runs.
 
 ## Why these directories
 

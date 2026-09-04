@@ -4,8 +4,9 @@ What goes where in an agentic Python project, and why — one section per path.
 
 Written for two readers. A person asks *"where does this file go, and can I
 argue with the answer?"* A coding agent asks the same thing and needs the answer
-in a fixed shape it can parse. So every entry has the same four fields and the
-tier is a field, never a hint buried in prose.
+in a fixed shape it can parse. So every entry carries the same fixed fields —
+Tier, What, Who does it this way, and Why where the answer is not obvious — and
+the tier is a field, never a hint buried in prose.
 
 ## How to read this
 
@@ -23,8 +24,8 @@ something merely unusual.
 taken. "Industry standard" with no name behind it is not an argument, and this
 document does not make that claim anywhere.
 
-**Two numbers you will see repeatedly.** They come from two counting passes and
-are reproducible; the method is in [Where the numbers come from](#where-the-numbers-come-from).
+**The counts you will see repeatedly** come from three counting passes and are
+reproducible; the method is in [Where the numbers come from](#where-the-numbers-come-from).
 
 > **This document has a defect on purpose, and it is worth naming.** The layout
 > this repository takes its genre from,
@@ -458,8 +459,8 @@ top-level packages and not one domain name. Layer names at the top level:
 - **Tier:** SHOULD
 - **What.** Each subsystem keeps its own errors beside the code that raises them:
   `llm/exceptions.py`, `tools/exceptions.py`.
-- **The count.** A single `exceptions.py` at the package root appears in 17 of 30
-  repositories measured — but the large products do the opposite and federate:
+- **Who does it this way.** A single `exceptions.py` at the package root appears
+  in 17 of 30 repositories measured — but the large products do the opposite and federate:
   **onyx 9 modules, dify 20, airflow 20, sentry 20, posthog 20**. The root file
   is what small packages have; per-subsystem is what products grow into. This
   repository follows onyx.
@@ -537,6 +538,11 @@ The format check is this repository's own addition, and the tier says so. It
 costs one line and prevents the failure its absence already produced in two
 sibling repositories: a `make check` without it, next to a CI that had it —
 green locally, red in CI.
+
+CI carries a second job the local gate does not: `make compose-check` (the
+merged compose model must render), the image build, and a start of the built
+image — a Dockerfile that builds but was never started is an untested
+artifact.
 
 Worth knowing about the gap: all four official templates also run **codespell**,
 and the FastAPI template runs **typos**. A spell-check gate is more common in
