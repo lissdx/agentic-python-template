@@ -42,8 +42,11 @@ client_secret*.json
 # ── Data ──────────────────────────────────────────────────────────────
 # Real inputs are never source. An eval set built from production data carries
 # whatever that data carried; keep it out of history, where deletion does not
-# reach.
-data/
+# reach. data/README.md is the one committed file: it documents the folder and
+# names the default. Committing a small open sample is a deliberate act
+# (`git add -f`), not an accident — see data/README.md.
+data/*
+!data/README.md
 eval_data/
 
 # ── Agent toolchains ──────────────────────────────────────────────────

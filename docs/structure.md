@@ -180,6 +180,25 @@ core never imports the web layer. `api/` is a leaf.
   arrangements — but all outside.
 - **Not here.** Anything imported at runtime.
 
+### `data/`
+
+- **Tier:** MAY — delete it if your project has no local working data
+- **What.** The designated home for local inputs: the corpus you index,
+  downloaded datasets, scratch data. Only `data/README.md` is committed;
+  everything else is ignored by default (`data/*` + `!data/README.md` in
+  `.gitignore`).
+- **Why a default, not a prohibition.** The two mistakes are not symmetric.
+  Accidentally committing private or third-party data is irreversible — history
+  does not forget — while deliberately committing a small open sample costs one
+  flag (`git add -f`). The default guards the irreversible side; the README
+  names the reasons and leaves the decision with the developer.
+- **Who does it this way.** cookiecutter-data-science (10 039★) ships `data/`
+  in every generated project with `/data/` gitignored and the tree held by
+  committed `.gitkeep` files. A README instead of `.gitkeep` is this
+  repository's variant: a README can say why, a `.gitkeep` cannot.
+- **Not here.** Evaluation datasets (`evals/datasets/`), fixtures a runnable
+  example needs (`examples/`), seeds for the local stack (`devenv/`).
+
 ### `db/migrations/`
 
 - **Tier:** MAY — delete it if you have no database
