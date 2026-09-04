@@ -73,6 +73,10 @@ core never imports the web layer. `api/` is a leaf.
   silently resolving something else. That is the difference between a
   reproducible CI run and a coincidence.
 - **Never hand-edit it.**
+- **Who does it this way.** 8 of 16 trees measured commit a `uv.lock` at the
+  root: pydantic-ai, mcp python-sdk, phoenix, crewAI, onyx, openai-agents-python,
+  ragflow, the FastAPI full-stack template. The other eight use a different
+  package manager.
 
 ### `Makefile`
 
@@ -92,6 +96,8 @@ core never imports the web layer. `api/` is a leaf.
 
 - **Tier:** MUST
 - **What.** What this is, how to start, where the reasoning lives.
+- **Who does it this way.** 16 of 16 trees measured — the one entry where
+  "universal" is literal.
 - **Not here.** Reasoning. It goes in this file. One fact, one home.
 
 ### `AGENTS.md` (with `CLAUDE.md` as a symlink)
@@ -114,11 +120,19 @@ core never imports the web layer. `api/` is a leaf.
   value.
 - **Why.** A variable that is not listed here is a variable nobody can find. It
   is also the only safe place for secrets to appear at all.
+- **Who does it this way.** The file is common, the root location is not: at the
+  root in 2 of 16 trees measured (browser-use `.env.example`, OpenHands
+  `.env.sample`); ten more keep one beside the deployable unit that reads it —
+  dify `api/.env.example`, onyx `widget/.env.example`. A single-package template
+  has one deployable unit, so its root is that place.
 
 ### `.python-version`, `.gitignore`, `LICENSE`, `SECURITY.md`, `CONTRIBUTING.md`
 
 - **Tier:** `.gitignore` and `LICENSE` MUST; the rest SHOULD.
 - **What.** Housekeeping. `.python-version` pins the interpreter `uv` picks.
+- **Who does it this way.** At the root of the 16 trees measured:
+  CONTRIBUTING 10, SECURITY.md 8, `.python-version` 5. Only README.md and
+  `.github/workflows/` score 16 of 16.
 
 ### `Dockerfile` — root, or `docker/`?
 
@@ -160,6 +174,9 @@ core never imports the web layer. `api/` is a leaf.
   need real I/O — a network, a database, a live model?
 - **Why outside.** Tests are not part of what ships. Inside the package they
   land in the wheel.
+- **Who does it this way.** All four official LangChain agent templates: tests
+  outside the package, tier `__init__.py` files committed, `cassettes/` in
+  react-agent and memory-agent.
 - **`tests/unit/__init__.py` and `tests/integration/__init__.py` are MUST.**
   Not style — without them pytest fails collection with *"import file mismatch"*
   as soon as the same file name exists in both tiers. All four official
@@ -212,6 +229,9 @@ core never imports the web layer. `api/` is a leaf.
 ### `docker/`
 
 - **Tier:** SHOULD — see the Dockerfile entry above for the count and the price.
+- **Who does it this way.** Netflix's dispatch and agent-service-toolkit; 17 of
+  47 counted keep the Dockerfile in a directory (the count lives in the
+  Dockerfile entry above).
 - **What.** The image and its `.dockerignore`. Note that BuildKit reads
   `<dockerfile-name>.dockerignore` from the Dockerfile's own directory, and that
   file takes precedence over a `.dockerignore` at the context root.
@@ -228,13 +248,16 @@ core never imports the web layer. `api/` is a leaf.
 - **Why we keep it.** `devenv` is the *concern* — the local environment — and
   docker is one mechanism inside it. The nesting reflects that, and the directory
   has somewhere to grow.
-- **Who does something similar.** Grafana (`devenv/docker/blocks/`).
+- **Who does it this way.** Nobody in the corpus — zero precedents, as stated
+  above. The nearest relative is Grafana (`devenv/docker/blocks/`).
 
 ### `docs/`
 
 - **Tier:** SHOULD
 - **What.** This file, plus `architecture.md` (the why of the system) and
   `runbook.md` (what to do when it breaks).
+- **Who does it this way.** 13 of 16 trees measured — onyx, pydantic-ai, dify,
+  adk-python among them.
 - **Not here.** What goes where — that is this file, and this file is the only
   home for it.
 
@@ -245,9 +268,10 @@ core never imports the web layer. `api/` is a leaf.
   are separated: `experiments/` strips outputs (real data must not enter a
   history that does not forget); `tutorials/` keeps them (seeing the output
   without running the code is the point) and uses synthetic data only.
-- **Who shows the cost of not deciding.** Ragas ships outputs in all six
-  notebooks reviewed; Phoenix is inconsistent within a single directory. That
-  inconsistency is what an unwritten policy looks like.
+- **Who does it this way.** No corpus tree splits the two genres — this is our
+  own policy. The cost of not having one shows at ragas (outputs shipped in all
+  six notebooks reviewed) and phoenix (inconsistent within a single directory):
+  that inconsistency is what an unwritten policy looks like.
 - **Naming.** Sortable: `1.0-yl-retrieval-spike.ipynb`.
 
 ### `scripts/`
@@ -256,6 +280,8 @@ core never imports the web layer. `api/` is a leaf.
 - **What.** One-off operational scripts: a backfill, a dump, a migration helper.
 - **The rule that defines it.** Nothing under `src/` imports anything here. A
   script that grows a second caller belongs in the package.
+- **Who does it this way.** 12 of 16 trees measured — pydantic-ai, dify,
+  phoenix, the full-stack template among them.
 - **Trap.** Do not list `scripts` in mypy's `files` while it holds no Python —
   an empty entry fails the run.
 
@@ -263,6 +289,8 @@ core never imports the web layer. `api/` is a leaf.
 
 - **Tier:** MAY
 - **What.** Runnable usage a reader can copy. Not tests, not documentation prose.
+- **Who does it this way.** 10 of 16 trees measured — pydantic-ai, browser-use,
+  openai-agents-python among them.
 
 ### `.github/`
 
@@ -270,6 +298,8 @@ core never imports the web layer. `api/` is a leaf.
 - **What.** `workflows/ci.yml` and `dependabot.yml`.
 - **Why dependabot.** Pinned action versions rot silently. It answered within a
   minute of this repository's first push with three major-version gaps.
+- **Who does it this way.** `.github/workflows/` is present in 16 of 16 trees
+  measured — tied with README.md as the corpus's only universals.
 
 ---
 
@@ -288,12 +318,18 @@ top-level packages and not one domain name. Layer names at the top level:
 - **What.** The version, read from installed distribution metadata.
 - **Why.** One source for the number. A `__version__` literal beside a version in
   `pyproject.toml` is two sources that will disagree.
+- **Who does it this way.** pydantic-ai:
+  `__version__ = _metadata_version('pydantic_ai_slim')`. langgraph reads
+  `metadata.version(__package__)` in `version.py`. Both read installed metadata
+  rather than repeating the number.
 
 ### `py.typed`
 
 - **Tier:** MUST if you ship types
 - **What.** An empty marker (PEP 561) telling a consumer's type-checker that the
   annotations in this package are real.
+- **Who does it this way.** 11 of 16 trees measured ship one — pydantic-ai,
+  langgraph, openai-agents-python, adk-python among them.
 
 ### `config.py`
 
@@ -324,7 +360,7 @@ top-level packages and not one domain name. Layer names at the top level:
   once, at startup.
 - **Why.** Without it an agent is a black box: it answered, and why is
   unrecoverable after the run. This is not a late addition to an agentic system.
-- **On the name.** Only 8 of 19 measured have a file called
+- **Who does it this way.** Only 8 of 19 measured have a file called
   `observability`/`telemetry`/`tracing`. The *concern* is nearly universal; the
   *name* is not. onyx has seven such modules, dify three, phoenix three.
 - **A module until a second backend arrives**, then `tracing/`.
@@ -335,8 +371,9 @@ top-level packages and not one domain name. Layer names at the top level:
 - **What.** The single seam to the provider: `base.py` (the Protocol every
   provider implements), `factory.py` (name to client — the one place a model is
   chosen), one file per vendor.
-- **The count.** A dedicated provider seam appears in **9 of 10** trees. Nothing
-  else in this document has that level of agreement.
+- **Who does it this way.** A dedicated provider seam appears in **9 of 10**
+  trees — nothing else in this document has that level of agreement — and under
+  exactly this name at onyx and browser-use.
 - **Why the name `llm/` and not `models/`.** `models/` is the majority name in
   *libraries*, but in any project that also has a database the word already means
   "tables". `llm/` is confirmed at onyx (31 877★) and browser-use (111 925★).
@@ -352,6 +389,8 @@ top-level packages and not one domain name. Layer names at the top level:
   `graph.py` (builds and compiles; exports `graph`), `state.py` (the typed state
   schema), `prompts.py` (this agent's prompts), `tools.py` (tools only this agent
   uses).
+- **Who does it this way.** All four official LangChain agent templates; Google
+  ADK's examples keep 85 `prompt.py` files beside their agents.
 - **Why prompts live here and not in a central `prompts/`.** A prompt and the
   node that sends it change in the same commit. Splitting them puts one agent in
   two directories. All four official LangChain templates do it this way, and
@@ -369,8 +408,10 @@ top-level packages and not one domain name. Layer names at the top level:
 - **The boundary against `agents/`.** An agent *decides*; a tool *acts*. They
   change for different reasons — a new capability is a tool, a new judgement is
   an agent — so they do not share a file.
-- **The count.** `tools/` is the most common directory name in the whole corpus:
-  65 408 hits by code search, against 35 264 for `agents/`.
+- **Who does it this way.** `tools/` is the most common directory name in the
+  whole corpus: 65 408 hits by code search, against 35 264 for `agents/`. Inside
+  the package at onyx (`backend/onyx/tools/`) and browser-use
+  (`browser_use/tools/`, with a `registry/` inside).
 - **Test them without a graph.** That is the point of one file per tool.
 
 ### `db/`
@@ -393,6 +434,8 @@ top-level packages and not one domain name. Layer names at the top level:
   `routes/<resource>.py`.
 - **The rule is the direction of the arrow, not the location.** The core imports
   nothing from here; this imports the core.
+- **Who does it this way.** The FastAPI full-stack template:
+  `api/routes/<resource>.py` with `deps.py` beside them.
 - **How to enforce it cheaply.** An import-linter contract —
   `agents/**` and `llm/**` must not import `fastapi`. dify carries 23 such
   contracts. A rule with nothing to check it drifts.
@@ -405,6 +448,8 @@ top-level packages and not one domain name. Layer names at the top level:
 
 - **Tier:** MAY — only if you do RAG
 - **What.** Loaders, chunking, the vector-store client.
+- **Who does it this way.** A directory named `retrieval` appears in 3 of 16
+  trees measured: adk-python, dify, onyx.
 - **Delete it otherwise.** An empty concern in the tree reads as a concern the
   project has.
 
@@ -517,6 +562,12 @@ Two counting passes, both against real trees via the GitHub trees API
   llama_index, autogen, OpenHands, mcp python-sdk, smolagents, django, starlette,
   flask, requests, sqlalchemy, pydantic, httpx, fastapi, airflow, sentry,
   posthog.
+- **Pass three (root conventions, 2026-09-04).** 16 trees re-fetched whole via
+  the same API for the `README`/`.env.example`/`uv.lock`/`.python-version`/
+  `docs`/`scripts`/`examples`/`workflows`/`py.typed`/`retrieval` counts: onyx,
+  browser-use, dify, ragflow, agno, langgraph, pydantic-ai,
+  openai-agents-python, phoenix, adk-python, ragas, crewAI, OpenHands,
+  mcp python-sdk, smolagents, full-stack-fastapi-template. None truncated.
 
 **A caution about a source you will meet.** `zhanymkanov/fastapi-best-practices`
 (18 006★) attributes `router.py`, `schemas.py` and `dependencies.py` to Netflix's
