@@ -7,8 +7,7 @@ machine, and nothing that ships.
 devenv/
 └── docker/
     ├── compose.yaml              the local stack
-    ├── compose.override.yaml     dev only: exposed port, bind mount, debug logs
-    └── postgres/init.sql         runs once, on an empty data directory
+    └── compose.override.yaml     dev only: exposed port, bind mount, debug logs
 ```
 
 **Docker is one mechanism here, not the organising idea.** A development
@@ -29,7 +28,7 @@ repository root, so every path inside `compose.yaml` is written the way a person
 reads it. Calling `docker compose` by hand silently resolves them somewhere else.
 
 ```
-make up                  start everything      make up SERVICES=db   only the database
+make up                  start everything      make up SERVICES=app  only one service
 make down                stop                  make down VOLUMES=1   stop and discard data
 make logs                follow the logs
 make compose-check       validate without starting anything
@@ -41,5 +40,5 @@ developer's machine belongs there and nowhere else.
 ## When a second stack appears
 
 Each gets its own subdirectory — `devenv/docker/minimal/`, `devenv/docker/full/`,
-`devenv/docker/cloud/` for an emulated cloud — and `make up STACK=<name>` picks
-one. Grafana keeps dozens that way, one per dependency.
+`devenv/docker/cloud/` for an emulated cloud — and a `STACK` variable wired into
+`make up` picks one. Grafana keeps dozens that way, one per dependency.

@@ -9,7 +9,8 @@ make install
 make check
 ```
 
-`make check` runs lint, type-check and tests in the order CI runs them, so a
+`make check` runs lint, format check, type-check and tests in the order CI
+runs them, so a
 green terminal means a green pipeline. No command needs an activated
 virtualenv — `uv` resolves the environment itself.
 
@@ -26,5 +27,6 @@ virtualenv — `uv` resolves the environment itself.
 
 That is the most useful contribution this repository can get, and it needs one
 thing to be actionable: **name a repository that does it differently.** "This
-should be flat" is an opinion; "`browser-use` federates its exception hierarchy
-per subsystem, and here is why that beats a single root" is evidence.
+should be flat" is an opinion; "`onyx` federates its exception hierarchy per
+subsystem — nine modules, no root file — and here is why that beats a single
+root" is evidence.
